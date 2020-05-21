@@ -17,6 +17,7 @@ class Player(pygame.sprite.Sprite):
         self.movex = 0  # move along X
         self.movey = 0  # move along Y
         self.frame = 0  # count frames
+        self.health = 10
         self.images = []
         for i in range(1, 5):
             img = pygame.image.load(os.path.join('images', 'firzen' + str(i) + '.png')).convert()
@@ -53,24 +54,41 @@ class Player(pygame.sprite.Sprite):
                 self.frame = 0
             self.image = self.images[self.frame // 3]
 
+        hit_list = pygame.sprite.spritecollide(self, enemy_list, False)
+        for enemy in hit_list:
+            self.health -= 1
+            print(self.health)
+
 class Enemy(pygame.sprite.Sprite):
     # Spawn a enemy
-    def __init__(self, x, y, img):
+    def __init__(self, x, y, ename):
         ALPHA = (0,0,0)
         pygame.sprite.Sprite.__init__(self)
         self.movex = 0  # move along X
         self.movey = 0  # move along Y
         self.frame = 0  # count frames
         self.images = []
-        for i in range(1, 5):
-            img = pygame.image.load(os.path.join('images' + img + str(i) + '.png')).convert()
+        for i in range(1, 6):
+            img = pygame.image.load(os.path.join('images', ename + str(i) + '.png')).convert()
             img.convert_alpha()  # optimise alpha
             img.set_colorkey(ALPHA)  # set alpha
             self.images.append(img)
             self.image = self.images[0]
             self.rect = self.image.get_rect()
+            self.rect.x = x
+            self.rect.y = y
+            self.counter = 0  # counter variable
 
+class Level():
+    def bad(lvl, eloc, ename):
+        if lvl == 1:
+            enemy = Enemy(eloc[0],eloc[1],ename) # spawn enemy
+            enemy_list = pygame.sprite.Group() # create enemy group
+            enemy_list.add(enemy)              # add enemy to group
+        if lvl == 2:
+            print("Level " + str(lvl) )
 
+        return enemy_list
 '''
 Setup
 '''
@@ -87,6 +105,12 @@ player.rect.y = 500  # go to y
 player_list = pygame.sprite.Group()
 player_list.add(player)
 steps = 6  # how many pixels to move
+
+# enemy   = Enemy(900,500,'john') # spawn enemy
+# enemy_list = pygame.sprite.Group()   # create enemy group
+# enemy_list.add(enemy)                # add enemy to group
+
+enemy_list = Level.bad(1, [900,500], 'john')
 
 BLUE = (25, 25, 200)
 BLACK = (23, 23, 23)
@@ -131,5 +155,6 @@ while main:
     world.blit(backdrop, backdropbox)
     player.update()  # update player position
     player_list.draw(world)  # draw player
+    enemy_list.draw(world)  # refresh enemies
     pygame.display.flip()
     clock.tick(fps)
