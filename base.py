@@ -27,6 +27,8 @@ class Player(pygame.sprite.Sprite):
         self.movex = 0  # move along X
         self.movey = 0  # move along Y
         self.frame = 0  # count frames
+        self.collide_delta = 0
+        self.jump_delta = 6
         self.health = 10
         self.images = []
         for i in range(1, 5):
@@ -37,25 +39,32 @@ class Player(pygame.sprite.Sprite):
             self.image = self.images[0]
             self.rect = self.image.get_rect()
 
+    def jump(self,platform_list):
+        self.jump_delta = 0
+
+    def gravity(self):
+        global grav
+        if grav:
+            self.movey += 2 # how fast player falls
+        if self.rect.y > worldy and self.movey >= 0:
+            self.movey = 0
+            self.rect.y = worldy-ty*2
+
     def control(self, x, y):
 
         # control player movement
 
         self.movex += x
-        if self.rect.y == 500:
-            self.movey += y
-        else:
-            self.movey = 0
+        self.movey += y
+
 
     def update(self):
-
+        global grav
+        grav = 1
         # Update sprite position
 
         self.rect.x = self.rect.x + self.movex
-        if self.rect.y == (500 - steps*3):
-            self.rect.y = 500
-        else:
-            self.rect.y = self.rect.y + self.movey
+        self.rect.y = self.rect.y + self.movey
 
         # moving left
         if self.movex < 0:
@@ -76,6 +85,39 @@ class Player(pygame.sprite.Sprite):
         for enemy in hit_list:
             self.health -= 1
             print(self.health)
+
+        ground_hit_list = pygame.sprite.spritecollide(self, ground_list , False)
+        for g in ground_hit_list:
+            self.movey = 0
+            # self.rect.y = worldy-ty*2 - 25
+            self.collide_delta = 0 # stop jumping
+            grav = 0
+            # if self.rect.y > g.rect.y:
+            #     self.health -=1
+            #     print(g.rect.y)
+
+        plat_hit_list = pygame.sprite.spritecollide(self, plat_list, False)
+        for p in plat_hit_list:
+            if self.rect.y > p.rect.y:
+                self.collide_delta = 0
+                self.movey = 0
+                grav = 1
+            else:
+                self.collide_delta = 0 # stop jumping
+                self.movey = 0
+                grav = 0
+
+
+
+
+        if self.collide_delta < 6 and self.jump_delta < 6:
+            # self.jump_delta = 6*2
+            self.movey -= 33  # how high to jump
+            print("jump")
+            self.collide_delta += 6
+            self.jump_delta    += 6
+            grav = 1
+
 
 class Enemy(pygame.sprite.Sprite):
     # Spawn a enemy
@@ -120,6 +162,11 @@ class Enemy(pygame.sprite.Sprite):
             self.counter = 0
 
         self.counter += 1
+    def gravity(self):
+        self.movey += 2 # how fast player falls
+        if self.rect.y > worldy and self.movey >= 0:
+            self.movey = 0
+            self.rect.y = worldy-ty*2
 
 class Level():
     def bad(lvl, eloc, ename):
@@ -132,16 +179,16 @@ class Level():
 
         return enemy_list
 
-    # def ground(lvl, x, y, w, h):
-    #     ground_list = pygame.sprite.Group()
-    #     if lvl == 1:
-    #         ground = Platform(x, y, w, h, 'block-ground.png')
-    #         ground_list.add(ground)
-    #
-    #     if lvl == 2:
-    #         print("Level " + str(lvl))
-    #
-    #     return ground_list
+    def ground(lvl, x, y, w, h):
+        ground_list = pygame.sprite.Group()
+        if lvl == 1:
+            ground = Platform(x, y, w, h, 'ground.png')
+            ground_list.add(ground)
+
+        if lvl == 2:
+            print("Level " + str(lvl))
+
+        return ground_list
 
     def platform(lvl):
         plat_list = pygame.sprite.Group()
@@ -159,25 +206,25 @@ Setup
 '''
 worldx = 1080
 worldy = 600
-
+tx = 50
+ty = 50
 world = pygame.display.set_mode([worldx, worldy])
 backdrop = pygame.image.load(os.path.join('images', 'stage.png')).convert()
 backdropbox = world.get_rect()
 
 player = Player()  # spawn player
 player.rect.x = 0  # go to x
-player.rect.y = 500  # go to y
+player.rect.y = 200  # go to y
 player_list = pygame.sprite.Group()
 player_list.add(player)
 steps = 6  # how many pixels to move
+# jump = -24
+grav = 1
 
-# enemy   = Enemy(900,500,'john') # spawn enemy
-# enemy_list = pygame.sprite.Group()   # create enemy group
-# enemy_list.add(enemy)                # add enemy to group
 
-enemy_list = Level.bad(1, [900,500], 'john')
-# ground_list = Level.ground( 1,0,worldy-97,1080,97 )
-plat_list   = Level.platform( 1 )
+enemy_list = Level.bad(1, [900,475], 'john')
+ground_list = Level.ground(1,0,worldy-ty,1080,100)
+plat_list   = Level.platform(1)
 
 BLUE = (25, 25, 200)
 BLACK = (23, 23, 23)
@@ -208,24 +255,29 @@ while main:
             if event.key == pygame.K_RIGHT or event.key == ord('d'):
                 player.control(steps, 0)
             if event.key == pygame.K_UP or event.key == ord('w'):
-                player.control(0, -steps*3)
+                player.jump(plat_list)
+            #     print("jump")
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == ord('a'):
                 player.control(steps, 0)
             if event.key == pygame.K_RIGHT or event.key == ord('d'):
                 player.control(-steps, 0)
+            # if event.key == pygame.K_UP or event.key == ord('w'):
+            #     player.jump(plat_list)
             if event.key == ord('q'):
                 pygame.quit()
                 sys.exit()
                 main = False
 
     world.blit(backdrop, backdropbox)
+    player.gravity() # check gravity
     player.update()  # update player position
     player_list.draw(world)  # draw player
     enemy_list.draw(world)  # refresh enemies
     for e in enemy_list:
         e.move()
+        e.gravity()
     # ground_list.draw(world)  # refresh ground
     plat_list.draw(world)  # refresh platforms
     pygame.display.flip()
