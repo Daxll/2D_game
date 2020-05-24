@@ -1,7 +1,7 @@
 import pygame
 import sys
 import os
-
+import pygame.freetype
 # import pygame_cffi
 
 '''
@@ -30,6 +30,8 @@ class Player(pygame.sprite.Sprite):
         self.collide_delta = 0
         self.jump_delta = 6
         self.health = 10
+        self.score = 0
+        self.damage = 0
         self.images = []
         for i in range(1, 5):
             img = pygame.image.load(os.path.join('images', 'firzen' + str(i) + '.png')).convert()
@@ -88,14 +90,29 @@ class Player(pygame.sprite.Sprite):
             self.image = self.images[self.frame // 3]
 
 
-        hit_list = pygame.sprite.spritecollide(self, enemy_list, False)
-        for enemy in hit_list:
-            self.health -= 1
-            if self.rect.x <= enemy.rect.x:
-                cooldown = 20
-            elif self.rect.x > enemy.rect.x:
-                cooldown = 20
+        enemy_hit_list = pygame.sprite.spritecollide(self, enemy_list, False)
+        # for enemy in hit_list:
+        #     self.health -= 1
+        #     if self.rect.x <= enemy.rect.x:
+        #         cooldown = 20
+        #     elif self.rect.x > enemy.rect.x:
+        #         cooldown = 20
+        if self.damage == 0:
+            for enemy in enemy_hit_list:
+                if not self.rect.contains(enemy):
+                    self.damage = self.rect.colliderect(enemy)
+                    cooldown = 20
+        if self.damage == 1:
+            idx = self.rect.collidelist(enemy_hit_list)
+            if idx == -1:
+                self.damage = 0   # set damage back to 0
+                self.health -= 1  # subtract 1 hp
 
+        loot_hit_list = pygame.sprite.spritecollide(self, loot_list, False)
+        for loot in loot_hit_list:
+            loot_list.remove(loot)
+            self.score += 1
+        print(self.score)
 
 
 
@@ -124,7 +141,7 @@ class Player(pygame.sprite.Sprite):
         # prevent exiting screen left side / end lvl condition will be added later.
         if self.rect.x >= 1030:
             self.rect.x = 1030
-        print(self.rect.x)
+        # print(self.rect.x)
 
         # jump mechanic
         if self.collide_delta < 6 and self.jump_delta < 6:
@@ -178,11 +195,11 @@ class Enemy(pygame.sprite.Sprite):
             self.counter = 0
 
         self.counter += 1
-    def gravity(self):
-        self.movey += 2 # how fast player falls
-        if self.rect.y > worldy and self.movey >= 0:
-            self.movey = 0
-            self.rect.y = worldy-ty*2
+    # def gravity(self):
+    #     self.movey += 2 # how fast player falls
+    #     if self.rect.y > worldy and self.movey >= 0:
+    #         self.movey = 0
+    #         self.rect.y = worldy-ty*2
 
 class Level():
     def bad(lvl, eloc, ename):
@@ -209,18 +226,33 @@ class Level():
     def platform(lvl, first_plat_loc):
         plat_list = pygame.sprite.Group()
         if lvl == 1:
-            plat = Platform(first_plat_loc, worldy - 97 - 128, 285, 67, 'plat1.png')
+            plat = Platform(first_plat_loc, worldy - 100 - 128, 285, 67, 'plat1.png')
             plat_list.add(plat)
-            plat = Platform(500, worldy - 97 - 320, 197, 54, 'plat1.png')
+            plat = Platform(500, worldy - 100 - 320, 197, 54, 'plat1.png')
             plat_list.add(plat)
-            plat = Platform(800, worldy - 97 - 200, 197, 54, 'plat1.png')
+            plat = Platform(800, worldy - 100 - 200, 197, 54, 'plat1.png')
             plat_list.add(plat)
-            plat = Platform(1100, worldy - 97 - 128, 197, 54, 'plat1.png')
+            plat = Platform(1100, worldy - 100 - 128, 197, 54, 'plat1.png')
             plat_list.add(plat)
         if lvl == 2:
             print("Level " + str(lvl))
 
         return plat_list
+
+    def loot(lvl):
+        if lvl == 1:
+            loot_list = pygame.sprite.Group()
+            loot = Platform(280,worldy-300,tx,ty, 'coin.png')
+            loot_list.add(loot)
+
+        if lvl == 2:
+            print(lvl)
+
+        return loot_list
+
+def stats(score,health):
+    myfont.render_to(world, (4, 4), "Score:"+str(score), WHITE, None, size=64)
+    myfont.render_to(world, (4, 72), "Health:"+str(health), WHITE, None, size=64)
 '''
 Setup
 '''
@@ -231,6 +263,8 @@ ty = 50
 world = pygame.display.set_mode([worldx, worldy])
 backdrop = pygame.image.load(os.path.join('images', 'stage.png')).convert()
 backdropbox = world.get_rect()
+
+
 
 player = Player()  # spawn player
 player.rect.x = 0  # go to x
@@ -251,6 +285,7 @@ cooldown = 0
 enemy_list = Level.bad(1, [900,475], 'john')
 ground_list = Level.ground(1,0,worldy-ty,1080,100)
 plat_list   = Level.platform(1 , first_plat_x)
+loot_list = Level.loot(1)
 
 BLUE = (25, 25, 200)
 BLACK = (23, 23, 23)
@@ -262,78 +297,88 @@ ani = 4  # animation cycles
 clock = pygame.time.Clock()
 pygame.init()
 
+font_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"fonts","PixelOperator.ttf")
+font_size = tx
+myfont = pygame.freetype.Font(font_path, font_size)
+
 main = True
 
 '''
 Main Loop
 '''
-
-while main:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit();
-            sys.exit()
-            main = False
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT or event.key == ord('a'):
-                player.control(-steps, 0)
-            if event.key == pygame.K_RIGHT or event.key == ord('d'):
-                player.control(steps, 0)
-            if event.key == pygame.K_UP or event.key == ord('w'):
-                player.jump(plat_list)
-
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_LEFT or event.key == ord('a'):
-                player.control(steps, 0)
-            if event.key == pygame.K_RIGHT or event.key == ord('d'):
-                player.control(-steps, 0)
-
-            if event.key == ord('q'):
-                pygame.quit()
+if __name__ == "__main__":
+    while main:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit();
                 sys.exit()
                 main = False
 
-        # scroll the world forward
-        if player.rect.x >= forwardx and end_token:
-            i = 0
-            scroll_token = 1
-            scroll = player.rect.x - forwardx
-            player.rect.x = forwardx
-            for p in plat_list:
-                i += 1
-                if p.rect.x <= -700 and i == 1:
-                    end_token = 0
-                else:
-                    p.rect.x -= scroll
-            for e in enemy_list:
-                e.rect.x -= scroll
-
-        # scroll the world backward
-        if player.rect.x <= backwardx and scroll_token:
-            j = 0
-            scroll = backwardx - player.rect.x
-            player.rect.x = backwardx
-
-            for p in plat_list:
-                j += 1
-                if p.rect.x >= first_plat_x and j == 1:
-                    scroll_token = 0
-                else: p.rect.x += scroll
-            for e in enemy_list:
-                e.rect.x += scroll
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT or event.key == ord('a'):
+                    player.control(-steps, 0)
+                if event.key == pygame.K_RIGHT or event.key == ord('d'):
+                    player.control(steps, 0)
+                if event.key == pygame.K_UP or event.key == ord('w'):
+                    player.jump(plat_list)
 
 
-    world.blit(backdrop, backdropbox)
-    player.gravity() # check gravity
-    player.update()  # update player position
-    player_list.draw(world)  # draw player
-    enemy_list.draw(world)  # refresh enemies
-    for e in enemy_list:
-        e.move()
-        e.gravity()
-    # ground_list.draw(world)  # refresh ground
-    plat_list.draw(world)  # refresh platforms
-    pygame.display.flip()
-    clock.tick(fps)
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_LEFT or event.key == ord('a'):
+                    player.control(steps, 0)
+                if event.key == pygame.K_RIGHT or event.key == ord('d'):
+                    player.control(-steps, 0)
+
+                if event.key == ord('q'):
+                    pygame.quit()
+                    sys.exit()
+                    main = False
+
+            # scroll the world forward
+            if player.rect.x >= forwardx and end_token:
+                i = 0
+                scroll_token = 1
+                scroll = player.rect.x - forwardx
+                player.rect.x = forwardx
+                for p in plat_list:
+                    i += 1
+                    if p.rect.x <= -700 and i == 1:
+                        end_token = 0
+                    else:
+                        p.rect.x -= scroll
+                for e in enemy_list:
+                    e.rect.x -= scroll
+                for l in loot_list:
+                    l.rect.x -= scroll
+
+            # scroll the world backward
+            if player.rect.x <= backwardx and scroll_token:
+                j = 0
+                scroll = backwardx - player.rect.x
+                player.rect.x = backwardx
+
+                for p in plat_list:
+                    j += 1
+                    if p.rect.x >= first_plat_x and j == 1:
+                        scroll_token = 0
+                    else: p.rect.x += scroll
+                for e in enemy_list:
+                    e.rect.x += scroll
+                for l in loot_list:
+                    l.rect.x += scroll
+
+
+        world.blit(backdrop, backdropbox)
+        loot_list.draw(world)
+        player.gravity() # check gravity
+        player.update()  # update player position
+        player_list.draw(world)  # draw player
+        enemy_list.draw(world)  # refresh enemies
+        for e in enemy_list:
+            e.move()
+
+        # ground_list.draw(world)  # refresh ground
+        plat_list.draw(world)  # refresh platforms
+        stats(player.score, player.health)  # draw text
+        pygame.display.flip()
+        clock.tick(fps)
