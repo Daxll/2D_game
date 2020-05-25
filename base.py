@@ -126,6 +126,7 @@ class Player(pygame.sprite.Sprite):
         plat_hit_list = pygame.sprite.spritecollide(self, plat_list, False)
         for p in plat_hit_list:
             if self.rect.y > p.rect.y:
+                self.rect.y = p.rect.y + ty + 20
                 self.collide_delta = 0
                 self.movey = 0
                 grav = 1  # gravity on
@@ -209,18 +210,20 @@ class Level():
             enemy_list = pygame.sprite.Group()  # create enemy group
             enemy_list.add(enemy)  # add enemy to group
         if lvl == 2:
-            print("Level " + str(lvl))
+            enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
+            enemy_list = pygame.sprite.Group()  # create enemy group
+            enemy_list.add(enemy)  # add enemy to group
 
         return enemy_list
 
     def ground(lvl, x, y, w, h):
         ground_list = pygame.sprite.Group()
-        if lvl == 1:
-            ground = Platform(x, y, w, h, 'ground.png')
-            ground_list.add(ground)
+        # if lvl == 1:
+        ground = Platform(x, y, w, h, 'ground.png')
+        ground_list.add(ground)
 
-        if lvl == 2:
-            print("Level " + str(lvl))
+        # if lvl == 2:
+        #     print("Level " + str(lvl))
 
         return ground_list
 
@@ -237,10 +240,20 @@ class Level():
             plat_list.add(plat)
             plat = Platform(1400, worldy - 100 - 128, 197, 54, 'plat1.png')
             plat_list.add(plat)
-            plat = Platform(1800, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat = Platform(1700, worldy - 100 - 200, 197, 54, 'plat1.png')
             plat_list.add(plat)
         if lvl == 2:
-            print("Level " + str(lvl))
+            plat = Platform(first_plat_loc, worldy - 100 - 128, 285, 67, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(500, worldy - 100 - 128, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(800, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1100, worldy - 100 - 320, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1400, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+
 
         return plat_list
 
@@ -251,24 +264,45 @@ class Level():
             loot_list.add(loot)
             loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
             loot_list.add(loot)
-            loot = Platform(850, worldy - 350, tx, ty, 'gogo.png')
+            loot = Platform(850, worldy - 400, tx, ty, 'gogo.png')
             loot_list.add(loot)
             loot = Platform(1300, worldy - 100, tx, ty, 'yuval.png')
             loot_list.add(loot)
             loot = Platform(1800, worldy - 100, tx, ty, 'inbal.png')
             loot_list.add(loot)
-            loot = Platform(1870, worldy - 360, tx, ty, 'gogo.png')
+            loot = Platform(1850, worldy - 360, tx, ty, 'gogo.png')
             loot_list.add(loot)
         if lvl == 2:
-            print(lvl)
+            loot_list = pygame.sprite.Group()
+            loot = Platform(280, worldy - 300, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(850, worldy - 400, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+            loot = Platform(1300, worldy - 100, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(950, worldy - 100, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(1300, worldy - 360, tx, ty, 'gogo.png')
+            loot_list.add(loot)
 
         return loot_list
 
 
-def stats(score, health):
+def stats(score, health, lvl):
     myfont.render_to(world, (4, 4), "Score:" + str(score), WHITE, None, size=64)
     myfont.render_to(world, (4, 72), "Health:" + str(health), WHITE, None, size=64)
+    myfont.render_to(world, (4, 140), "level:" + str(lvl), WHITE, None, size=64)
 
+def setup_lvl(lvl_num):
+    backdrop = pygame.image.load(os.path.join('images', 'stage' + str(lvl_num) + '.png')).convert()
+    player.rect.x = 0  # go to x
+    player.rect.y = 200
+    enemy_list = Level.bad(lvl_num, [900, 480], 'john')
+    plat_list = Level.platform(lvl_num, first_plat_x)
+    loot_list = Level.loot(lvl_num)
+    return backdrop,enemy_list,plat_list,loot_list
 
 '''
 Setup
@@ -278,7 +312,7 @@ worldy = 600
 tx = 50
 ty = 50
 world = pygame.display.set_mode([worldx, worldy])
-backdrop = pygame.image.load(os.path.join('images', 'stage.png')).convert()
+backdrop = pygame.image.load(os.path.join('images', 'stage1.png')).convert()
 backdropbox = world.get_rect()
 
 player = Player()  # spawn player
@@ -295,6 +329,8 @@ first_plat_x = 200
 scroll_token = 0
 end_token = 1
 cooldown = 0
+lvl = 1
+lvl_start = 0
 
 enemy_list = Level.bad(1, [900, 480], 'john')
 ground_list = Level.ground(1, 0, worldy - ty, 1080, 100)
@@ -346,39 +382,41 @@ if __name__ == "__main__":
                     sys.exit()
                     main = False
 
-            # scroll the world forward
-            if player.rect.x >= forwardx and end_token:
-                i = 0
-                scroll_token = 1
-                scroll = player.rect.x - forwardx
-                player.rect.x = forwardx
-                for p in plat_list:
-                    i += 1
-                    if p.rect.x <= -700 and i == 1:
-                        end_token = 0
-                    else:
-                        p.rect.x -= scroll
-                for e in enemy_list:
-                    e.rect.x -= scroll
-                for l in loot_list:
-                    l.rect.x -= scroll
+        # scroll the world forward
+        if player.rect.x >= forwardx and end_token:
+            i = 0
+            scroll_token = 1
+            scroll = player.rect.x - forwardx
+            player.rect.x = forwardx
+            for p in plat_list:
+                i += 1
+                if p.rect.x <= -700 and i == 1:
+                    end_token = 0
+                else:
+                    p.rect.x -= scroll
+            for e in enemy_list:
+                e.rect.x -= scroll
+            for l in loot_list:
+                l.rect.x -= scroll
 
-            # scroll the world backward
-            if player.rect.x <= backwardx and scroll_token:
-                j = 0
-                scroll = backwardx - player.rect.x
-                player.rect.x = backwardx
+        # scroll the world backward
+        if player.rect.x <= backwardx and scroll_token:
+            j = 0
+            scroll = backwardx - player.rect.x
+            player.rect.x = backwardx
 
-                for p in plat_list:
-                    j += 1
-                    if p.rect.x >= first_plat_x and j == 1:
-                        scroll_token = 0
-                    else:
-                        p.rect.x += scroll
-                for e in enemy_list:
-                    e.rect.x += scroll
-                for l in loot_list:
-                    l.rect.x += scroll
+            for p in plat_list:
+                j += 1
+                if p.rect.x >= first_plat_x and j == 1:
+                    scroll_token = 0
+                else:
+                    p.rect.x += scroll
+                    end_token = 1
+            for e in enemy_list:
+                e.rect.x += scroll
+            for l in loot_list:
+                l.rect.x += scroll
+
 
         world.blit(backdrop, backdropbox)
         loot_list.draw(world)
@@ -391,6 +429,17 @@ if __name__ == "__main__":
 
         # ground_list.draw(world)  # refresh ground
         plat_list.draw(world)  # refresh platforms
-        stats(player.score, player.health)  # draw text
+        stats(player.score, player.health, lvl)  # draw text
+
+        if player.score == 6:
+            lvl +=1
+            player.score = 0
+            backdrop,enemy_list,plat_list,loot_list = setup_lvl(lvl)
+            if lvl == 6:
+                lvl = 1
+                player.score = 0
+                backdrop,enemy_list,plat_list,loot_list = setup_lvl(lvl)
+
         pygame.display.flip()
         clock.tick(fps)
+
