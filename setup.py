@@ -12,7 +12,7 @@ if sys.platform == "win32":
     base = "Win32GUI"
 
 setup(name="Jumper",
-      version="1.0",
+      version="1.1",
       description="Jump around",
       options={"build_exe": build_exe_options},
       executables=[Executable(script="base.py", base=base)])

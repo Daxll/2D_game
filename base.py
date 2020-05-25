@@ -2,27 +2,31 @@ import pygame
 import sys
 import os
 import pygame.freetype
+
 # import pygame_cffi
 
 '''
 Objects
 '''
+
+
 class Platform(pygame.sprite.Sprite):
-# x location, y location, img width, img height, img file
-    def __init__(self,xloc,yloc,imgw,imgh,img):
+    # x location, y location, img width, img height, img file
+    def __init__(self, xloc, yloc, imgw, imgh, img):
         ALPHA = (0, 0, 0)
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(os.path.join('images',img)).convert()
+        self.image = pygame.image.load(os.path.join('images', img)).convert()
         self.image.convert_alpha()
         self.image.set_colorkey(ALPHA)
         self.rect = self.image.get_rect()
         self.rect.y = yloc
         self.rect.x = xloc
 
+
 class Player(pygame.sprite.Sprite):
     # Spawn a player
     def __init__(self):
-        ALPHA = (0,255,0)
+        ALPHA = (0, 255, 0)
         pygame.sprite.Sprite.__init__(self)
         self.movex = 0  # move along X
         self.movey = 0  # move along Y
@@ -33,7 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.score = 0
         self.damage = 0
         self.images = []
-        for i in range(1, 5):
+        for i in range(1, 9):
             img = pygame.image.load(os.path.join('images', 'firzen' + str(i) + '.png')).convert()
             img.convert_alpha()  # optimise alpha
             img.set_colorkey(ALPHA)  # set alpha
@@ -41,16 +45,16 @@ class Player(pygame.sprite.Sprite):
             self.image = self.images[0]
             self.rect = self.image.get_rect()
 
-    def jump(self,platform_list):
+    def jump(self, platform_list):
         self.jump_delta = 0
 
     def gravity(self):
         global grav
         if grav:
-            self.movey += 2 # how fast player falls
+            self.movey += 2  # how fast player falls
         if self.rect.y > worldy and self.movey >= 0:
             self.movey = 0
-            self.rect.y = worldy-ty*2
+            self.rect.y = worldy - ty * 2
 
     def control(self, x, y):
 
@@ -59,14 +63,13 @@ class Player(pygame.sprite.Sprite):
         self.movex += x
         self.movey += y
 
-
     def update(self):
         global grav
         global cooldown
         grav = 1
 
         # Update sprite position
-        if cooldown == 0 :
+        if cooldown == 0:
             self.rect.x = self.rect.x + self.movex
 
         else:
@@ -78,17 +81,16 @@ class Player(pygame.sprite.Sprite):
         # moving left
         if self.movex < 0:
             self.frame += 1
-            if self.frame > (3*ani-1):
+            if self.frame > (3 * ani - 1):
                 self.frame = 0
-            self.image = self.images[self.frame // 3]
+            self.image = self.images[(self.frame // 3) + 4]
 
         # moving right
         if self.movex > 0:
             self.frame += 1
-            if self.frame > (3*ani-1):
+            if self.frame > (3 * ani - 1):
                 self.frame = 0
             self.image = self.images[self.frame // 3]
-
 
         enemy_hit_list = pygame.sprite.spritecollide(self, enemy_list, False)
         # for enemy in hit_list:
@@ -105,7 +107,7 @@ class Player(pygame.sprite.Sprite):
         if self.damage == 1:
             idx = self.rect.collidelist(enemy_hit_list)
             if idx == -1:
-                self.damage = 0   # set damage back to 0
+                self.damage = 0  # set damage back to 0
                 self.health -= 1  # subtract 1 hp
 
         loot_hit_list = pygame.sprite.spritecollide(self, loot_list, False)
@@ -114,26 +116,24 @@ class Player(pygame.sprite.Sprite):
             self.score += 1
         print(self.score)
 
-
-
-        ground_hit_list = pygame.sprite.spritecollide(self, ground_list , False)
+        ground_hit_list = pygame.sprite.spritecollide(self, ground_list, False)
         for g in ground_hit_list:
             self.movey = 0
-            # self.rect.y = worldy-ty*2 - 25
-            self.collide_delta = 0 # stop jumping
+            self.rect.y = worldy - ty * 2 - 25
+            self.collide_delta = 0  # stop jumping
             grav = 0
-
 
         plat_hit_list = pygame.sprite.spritecollide(self, plat_list, False)
         for p in plat_hit_list:
             if self.rect.y > p.rect.y:
                 self.collide_delta = 0
                 self.movey = 0
-                grav = 1
+                grav = 1  # gravity on
             else:
-                self.collide_delta = 0 # stop jumping
+                self.rect.y = p.rect.y - ty - 25
+                self.collide_delta = 0  # stop jumping
                 self.movey = 0
-                grav = 0
+                grav = 0  # gravity off
 
         # prevent exiting screen right side.
         if self.rect.x < 0:
@@ -148,20 +148,20 @@ class Player(pygame.sprite.Sprite):
             # self.jump_delta = 6*2
             self.movey -= 33  # how high to jump
             self.collide_delta += 6
-            self.jump_delta    += 6
+            self.jump_delta += 6
             grav = 1
 
 
 class Enemy(pygame.sprite.Sprite):
     # Spawn a enemy
     def __init__(self, x, y, ename):
-        ALPHA = (0,0,0)
+        ALPHA = (0, 0, 0)
         pygame.sprite.Sprite.__init__(self)
         self.movex = 0  # move along X
         self.movey = 0  # move along Y
         self.frame = 0  # count frames
         self.images = []
-        for i in range(1, 6):
+        for i in range(1, 11):
             img = pygame.image.load(os.path.join('images', ename + str(i) + '.png')).convert()
             img.convert_alpha()  # optimise alpha
             img.set_colorkey(ALPHA)  # set alpha
@@ -185,12 +185,12 @@ class Enemy(pygame.sprite.Sprite):
             if self.frame > (3 * ani - 1):
                 self.frame = 0
             self.image = self.images[self.frame // 3]
-        elif self.counter >= distance and self.counter <= distance*2:
+        elif self.counter >= distance and self.counter <= distance * 2:
             self.rect.x += speed
             self.frame += 1
             if self.frame > (3 * ani - 1):
                 self.frame = 0
-            self.image = self.images[self.frame // 3]
+            self.image = self.images[(self.frame // 3) + 5]
         else:
             self.counter = 0
 
@@ -201,14 +201,15 @@ class Enemy(pygame.sprite.Sprite):
     #         self.movey = 0
     #         self.rect.y = worldy-ty*2
 
+
 class Level():
     def bad(lvl, eloc, ename):
         if lvl == 1:
-            enemy = Enemy(eloc[0],eloc[1],ename) # spawn enemy
-            enemy_list = pygame.sprite.Group() # create enemy group
-            enemy_list.add(enemy)              # add enemy to group
+            enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
+            enemy_list = pygame.sprite.Group()  # create enemy group
+            enemy_list.add(enemy)  # add enemy to group
         if lvl == 2:
-            print("Level " + str(lvl) )
+            print("Level " + str(lvl))
 
         return enemy_list
 
@@ -234,6 +235,10 @@ class Level():
             plat_list.add(plat)
             plat = Platform(1100, worldy - 100 - 128, 197, 54, 'plat1.png')
             plat_list.add(plat)
+            plat = Platform(1400, worldy - 100 - 128, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1800, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
         if lvl == 2:
             print("Level " + str(lvl))
 
@@ -242,17 +247,29 @@ class Level():
     def loot(lvl):
         if lvl == 1:
             loot_list = pygame.sprite.Group()
-            loot = Platform(280,worldy-300,tx,ty, 'coin.png')
+            loot = Platform(280, worldy - 300, tx, ty, 'inbal.png')
             loot_list.add(loot)
-
+            loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(850, worldy - 350, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+            loot = Platform(1300, worldy - 100, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(1800, worldy - 100, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(1870, worldy - 360, tx, ty, 'gogo.png')
+            loot_list.add(loot)
         if lvl == 2:
             print(lvl)
 
         return loot_list
 
-def stats(score,health):
-    myfont.render_to(world, (4, 4), "Score:"+str(score), WHITE, None, size=64)
-    myfont.render_to(world, (4, 72), "Health:"+str(health), WHITE, None, size=64)
+
+def stats(score, health):
+    myfont.render_to(world, (4, 4), "Score:" + str(score), WHITE, None, size=64)
+    myfont.render_to(world, (4, 72), "Health:" + str(health), WHITE, None, size=64)
+
+
 '''
 Setup
 '''
@@ -264,8 +281,6 @@ world = pygame.display.set_mode([worldx, worldy])
 backdrop = pygame.image.load(os.path.join('images', 'stage.png')).convert()
 backdropbox = world.get_rect()
 
-
-
 player = Player()  # spawn player
 player.rect.x = 0  # go to x
 player.rect.y = 200  # go to y
@@ -274,30 +289,28 @@ player_list.add(player)
 steps = 5  # how many pixels to move
 # jump = -24
 grav = 1
-forwardx  = 800
+forwardx = 800
 backwardx = 230
 first_plat_x = 200
 scroll_token = 0
 end_token = 1
 cooldown = 0
 
-
-enemy_list = Level.bad(1, [900,475], 'john')
-ground_list = Level.ground(1,0,worldy-ty,1080,100)
-plat_list   = Level.platform(1 , first_plat_x)
+enemy_list = Level.bad(1, [900, 480], 'john')
+ground_list = Level.ground(1, 0, worldy - ty, 1080, 100)
+plat_list = Level.platform(1, first_plat_x)
 loot_list = Level.loot(1)
 
 BLUE = (25, 25, 200)
 BLACK = (23, 23, 23)
 WHITE = (254, 254, 254)
 
-
-fps = 40 # frame rate
+fps = 40  # frame rate
 ani = 4  # animation cycles
 clock = pygame.time.Clock()
 pygame.init()
 
-font_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"fonts","PixelOperator.ttf")
+font_path = os.path.join('fonts', 'PixelOperator.ttf')
 font_size = tx
 myfont = pygame.freetype.Font(font_path, font_size)
 
@@ -321,7 +334,6 @@ if __name__ == "__main__":
                     player.control(steps, 0)
                 if event.key == pygame.K_UP or event.key == ord('w'):
                     player.jump(plat_list)
-
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == ord('a'):
@@ -361,16 +373,16 @@ if __name__ == "__main__":
                     j += 1
                     if p.rect.x >= first_plat_x and j == 1:
                         scroll_token = 0
-                    else: p.rect.x += scroll
+                    else:
+                        p.rect.x += scroll
                 for e in enemy_list:
                     e.rect.x += scroll
                 for l in loot_list:
                     l.rect.x += scroll
 
-
         world.blit(backdrop, backdropbox)
         loot_list.draw(world)
-        player.gravity() # check gravity
+        player.gravity()  # check gravity
         player.update()  # update player position
         player_list.draw(world)  # draw player
         enemy_list.draw(world)  # refresh enemies
