@@ -67,13 +67,15 @@ class Player(pygame.sprite.Sprite):
         global grav
         global cooldown
         grav = 1
-
+        global direction
         # Update sprite position
         if cooldown == 0:
             self.rect.x = self.rect.x + self.movex
-
-        else:
+        elif direction == 'left':
             self.rect.x -= steps
+            cooldown -= 1
+        elif direction == 'right':
+            self.rect.x += steps
             cooldown -= 1
 
         self.rect.y = self.rect.y + self.movey
@@ -104,6 +106,11 @@ class Player(pygame.sprite.Sprite):
                 if not self.rect.contains(enemy):
                     self.damage = self.rect.colliderect(enemy)
                     cooldown = 20
+                    hit_sound.play()
+                    if self.rect.x <= enemy.rect.x:
+                        direction = 'left'
+                    else :
+                        direction = 'right'
         if self.damage == 1:
             idx = self.rect.collidelist(enemy_hit_list)
             if idx == -1:
@@ -113,8 +120,9 @@ class Player(pygame.sprite.Sprite):
         loot_hit_list = pygame.sprite.spritecollide(self, loot_list, False)
         for loot in loot_hit_list:
             loot_list.remove(loot)
+            coin_sound.play()
             self.score += 1
-        print(self.score)
+
 
         ground_hit_list = pygame.sprite.spritecollide(self, ground_list, False)
         for g in ground_hit_list:
@@ -148,6 +156,7 @@ class Player(pygame.sprite.Sprite):
         if self.collide_delta < 6 and self.jump_delta < 6:
             # self.jump_delta = 6*2
             self.movey -= 33  # how high to jump
+            jump_sound.play()
             self.collide_delta += 6
             self.jump_delta += 6
             grav = 1
@@ -183,13 +192,13 @@ class Enemy(pygame.sprite.Sprite):
         if self.counter >= 0 and self.counter <= distance:
             self.rect.x -= speed
             self.frame += 1
-            if self.frame > (3 * ani - 1):
+            if self.frame > (3 * 5 - 1):
                 self.frame = 0
             self.image = self.images[self.frame // 3]
         elif self.counter >= distance and self.counter <= distance * 2:
             self.rect.x += speed
             self.frame += 1
-            if self.frame > (3 * ani - 1):
+            if self.frame > (3 * 5 - 1):
                 self.frame = 0
             self.image = self.images[(self.frame // 3) + 5]
         else:
@@ -210,9 +219,40 @@ class Level():
             enemy_list = pygame.sprite.Group()  # create enemy group
             enemy_list.add(enemy)  # add enemy to group
         if lvl == 2:
+            enemy_list = pygame.sprite.Group()   # create enemy group
             enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
-            enemy_list = pygame.sprite.Group()  # create enemy group
             enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(eloc[0]-400, eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+        if lvl == 3:
+            enemy_list = pygame.sprite.Group()  # create enemy group
+            enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(eloc[0] + 250, eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+        if lvl == 4:
+            enemy_list = pygame.sprite.Group()  # create enemy group
+            enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(eloc[0]+250, eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(eloc[0]-250, eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+        if lvl == 5:
+            enemy_list = pygame.sprite.Group()  # create enemy group
+            enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(500, 225, ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+        if lvl == 6:
+            enemy_list = pygame.sprite.Group()  # create enemy group
+            enemy = Enemy(eloc[0], eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(1500,  eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+            enemy = Enemy(1200, eloc[1], ename)  # spawn enemy
+            enemy_list.add(enemy)  # add enemy to group
+
 
         return enemy_list
 
@@ -224,7 +264,6 @@ class Level():
 
         # if lvl == 2:
         #     print("Level " + str(lvl))
-
         return ground_list
 
     def platform(lvl, first_plat_loc):
@@ -253,8 +292,64 @@ class Level():
             plat_list.add(plat)
             plat = Platform(1400, worldy - 100 - 200, 197, 54, 'plat1.png')
             plat_list.add(plat)
-
-
+        if lvl == 3:
+            plat = Platform(first_plat_loc, worldy - 100 - 128, 285, 67, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(300, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(500, worldy - 100 - 128, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(800, worldy - 100 - 320, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1000, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1300, worldy - 100 - 128, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+        if lvl == 4:
+            plat = Platform(first_plat_loc, worldy - 100 - 200, 285, 67, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(500, worldy - 100 - 320, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(800, worldy - 100 - 400, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1100, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1400, worldy - 100 - 300, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1100, worldy - 100 - 450, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+        if lvl == 5:
+            plat = Platform(first_plat_loc, worldy - 100 - 128, 285, 67, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(300, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(200, worldy - 100 - 350, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(550, worldy - 100 - 350, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(750, worldy - 100 - 128, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1100, worldy - 100 - 220, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1400, worldy - 100 - 350, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+        if lvl == 6:
+            plat = Platform(first_plat_loc, worldy - 100 - 300, 285, 67, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(300, worldy - 100 - 150, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(500, worldy - 100 - 220, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(700, worldy - 100 - 300, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(900, worldy - 100 - 400, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1100, worldy - 100 - 320, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1400, worldy - 100 - 200, 197, 54, 'plat1.png')
+            plat_list.add(plat)
+            plat = Platform(1000, worldy - 100 - 128, 197, 54, 'plat1.png')
+            plat_list.add(plat)
         return plat_list
 
     def loot(lvl):
@@ -286,7 +381,62 @@ class Level():
             loot_list.add(loot)
             loot = Platform(1300, worldy - 360, tx, ty, 'gogo.png')
             loot_list.add(loot)
-
+        if lvl == 3:
+            loot_list = pygame.sprite.Group()
+            loot = Platform(330, worldy - 400, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(870, worldy - 500, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+            loot = Platform(1300, worldy - 100, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(950, worldy - 100, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(1100, worldy - 450, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+        if lvl == 4:
+            loot_list = pygame.sprite.Group()
+            loot = Platform(280, worldy - 300, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(850, worldy - 400, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+            loot = Platform(1500, worldy - 100, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(950, worldy - 100, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(1300, worldy - 360, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+        if lvl == 5:
+            loot_list = pygame.sprite.Group()
+            loot = Platform(280, 150, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(600, 150, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(850, worldy - 400, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+            loot = Platform(1500, 50, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(850, worldy - 300, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(1200, worldy - 400, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+        if lvl == 6:
+            loot_list = pygame.sprite.Group()
+            loot = Platform(330, worldy - 350, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(950, worldy - 500, tx, ty, 'gogo.png')
+            loot_list.add(loot)
+            loot = Platform(1300, worldy - 100, tx, ty, 'yuval.png')
+            loot_list.add(loot)
+            loot = Platform(1050, worldy - 300, tx, ty, 'inbal.png')
+            loot_list.add(loot)
+            loot = Platform(1500, worldy - 360, tx, ty, 'gogo.png')
+            loot_list.add(loot)
         return loot_list
 
 
@@ -295,12 +445,13 @@ def stats(score, health, lvl):
     myfont.render_to(world, (4, 72), "Health:" + str(health), WHITE, None, size=64)
     myfont.render_to(world, (4, 140), "level:" + str(lvl), WHITE, None, size=64)
 
-def setup_lvl(lvl_num):
+def setup_lvl(lvl_num, first_plat):
+
     backdrop = pygame.image.load(os.path.join('images', 'stage' + str(lvl_num) + '.png')).convert()
     player.rect.x = 0  # go to x
-    player.rect.y = 200
+    player.rect.y = 0
     enemy_list = Level.bad(lvl_num, [900, 480], 'john')
-    plat_list = Level.platform(lvl_num, first_plat_x)
+    plat_list = Level.platform(lvl_num, first_plat)
     loot_list = Level.loot(lvl_num)
     return backdrop,enemy_list,plat_list,loot_list
 
@@ -312,16 +463,16 @@ worldy = 600
 tx = 50
 ty = 50
 world = pygame.display.set_mode([worldx, worldy])
-backdrop = pygame.image.load(os.path.join('images', 'stage1.png')).convert()
 backdropbox = world.get_rect()
+backdrop = pygame.image.load(os.path.join('images', 'stage1.png')).convert()
+
 
 player = Player()  # spawn player
 player.rect.x = 0  # go to x
-player.rect.y = 200  # go to y
+player.rect.y = 0  # go to y
 player_list = pygame.sprite.Group()
 player_list.add(player)
 steps = 5  # how many pixels to move
-# jump = -24
 grav = 1
 forwardx = 800
 backwardx = 230
@@ -330,7 +481,7 @@ scroll_token = 0
 end_token = 1
 cooldown = 0
 lvl = 1
-lvl_start = 0
+direction = 'left'
 
 enemy_list = Level.bad(1, [900, 480], 'john')
 ground_list = Level.ground(1, 0, worldy - ty, 1080, 100)
@@ -346,9 +497,21 @@ ani = 4  # animation cycles
 clock = pygame.time.Clock()
 pygame.init()
 
+# getting font for the score
 font_path = os.path.join('fonts', 'PixelOperator.ttf')
 font_size = tx
 myfont = pygame.freetype.Font(font_path, font_size)
+
+# importing music and sounds
+pygame.mixer.music.load(os.path.join('sound', 'Theme.mp3'))
+pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.play(-1)
+hit_sound = pygame.mixer.Sound(os.path.join('sound', 'attack.wav'))
+hit_sound.set_volume(0.3)
+coin_sound = pygame.mixer.Sound(os.path.join('sound', 'coin.wav'))
+coin_sound.set_volume(0.1)
+jump_sound = pygame.mixer.Sound(os.path.join('sound', 'jump.wav'))
+jump_sound.set_volume(0.1)
 
 main = True
 
@@ -432,13 +595,22 @@ if __name__ == "__main__":
         stats(player.score, player.health, lvl)  # draw text
 
         if player.score == 6:
+            if lvl == 6 :
+                lvl = 0
             lvl +=1
             player.score = 0
-            backdrop,enemy_list,plat_list,loot_list = setup_lvl(lvl)
-            if lvl == 6:
-                lvl = 1
-                player.score = 0
-                backdrop,enemy_list,plat_list,loot_list = setup_lvl(lvl)
+            scroll_token = 0
+            end_token = 1
+            backdrop,enemy_list,plat_list,loot_list = setup_lvl(lvl,first_plat_x)
+
+
+        if player.health == 0:
+            lvl = 1
+            scroll_token = 0
+            backdrop,enemy_list,plat_list,loot_list = setup_lvl(lvl,first_plat_x)
+            player.score = 0
+            end_token = 1
+            player.health = 10
 
         pygame.display.flip()
         clock.tick(fps)
