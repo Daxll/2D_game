@@ -5,14 +5,14 @@ from cx_Freeze import setup, Executable
 additional_modules = []
 
 build_exe_options = {"includes": additional_modules,
-                     "packages": ["pygame", "os", "sys"],}
+                     "packages": ["pygame", "os", "sys"]}
 
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
 
-setup(name="Jumper",
-      version="1.2",
+setup(name="LEVY JUMPER",
+      version="0.6",
       description="Jump around",
       options={"build_exe": build_exe_options},
-      executables=[Executable(script="base.py", base=base)])
+      executables=[Executable(script="menu.py", base=base)])

@@ -1,16 +1,13 @@
+'''
+LEVY JUMPER 2D side scrolling game
+Created by Gilai Levy
+2020
+'''
+
 import pygame
 import sys
 import os
 import pygame.freetype
-
-
-def draw_text(text, font, color, surface, x, y):
-    textobj = font.render(text, 1, color)
-    textrect = textobj.get_rect()
-    textrect.topleft = (x, y)
-    surface.blit(textobj, textrect)
-
-
 
 
 '''
@@ -416,7 +413,7 @@ class Level():
             loot_list.add(loot)
         if lvl == 4:
             loot_list = pygame.sprite.Group()
-            loot = Platform(280, worldy - 300, tx, ty, 'inbal.png')
+            loot = Platform(280, worldy - 400, tx, ty, 'inbal.png')
             loot_list.add(loot)
             loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
             loot_list.add(loot)
@@ -426,13 +423,13 @@ class Level():
             loot_list.add(loot)
             loot = Platform(950, worldy - 100, tx, ty, 'inbal.png')
             loot_list.add(loot)
-            loot = Platform(1300, worldy - 360, tx, ty, 'gogo.png')
+            loot = Platform(1250, worldy - 360, tx, ty, 'gogo.png')
             loot_list.add(loot)
         if lvl == 5:
             loot_list = pygame.sprite.Group()
-            loot = Platform(280, 150, tx, ty, 'inbal.png')
+            loot = Platform(280, 80, tx, ty, 'inbal.png')
             loot_list.add(loot)
-            loot = Platform(600, 150, tx, ty, 'yuval.png')
+            loot = Platform(600, 80, tx, ty, 'yuval.png')
             loot_list.add(loot)
             loot = Platform(850, worldy - 400, tx, ty, 'gogo.png')
             loot_list.add(loot)
@@ -444,11 +441,11 @@ class Level():
             loot_list.add(loot)
         if lvl == 6:
             loot_list = pygame.sprite.Group()
-            loot = Platform(330, worldy - 350, tx, ty, 'inbal.png')
+            loot = Platform(330, worldy - 320, tx, ty, 'inbal.png')
             loot_list.add(loot)
             loot = Platform(600, worldy - 480, tx, ty, 'yuval.png')
             loot_list.add(loot)
-            loot = Platform(950, worldy - 500, tx, ty, 'gogo.png')
+            loot = Platform(950, worldy - 570, tx, ty, 'gogo.png')
             loot_list.add(loot)
             loot = Platform(1300, worldy - 100, tx, ty, 'yuval.png')
             loot_list.add(loot)
@@ -478,7 +475,6 @@ def main_menu():
 
     backdropbox = world.get_rect()
     backdrop = pygame.image.load(os.path.join('images', 'levy jumper.png')).convert()
-    world.blit(backdrop, backdropbox)
 
     button_list = pygame.sprite.Group()
     button1_mouseover = pygame.image.load(os.path.join('images', 'new game hover.png')).convert_alpha()
@@ -489,37 +485,44 @@ def main_menu():
     button2_mouseclick = pygame.image.load(os.path.join('images', 'settings click.png')).convert_alpha()
     button2 = button(200, 350, 'settings normal.png')
     button_list.add(button2)
-
     button3_mouseover = pygame.image.load(os.path.join('images', 'continue hover.png')).convert_alpha()
     button3_mouseclick = pygame.image.load(os.path.join('images', 'continue click.png')).convert_alpha()
+    button3_blocked = pygame.image.load(os.path.join('images', 'continue locked.png')).convert_alpha()
     button3 = button(600, 200, 'continue normal.png')
     button_list.add(button3)
     button4_mouseover = pygame.image.load(os.path.join('images', 'high scores hover.png')).convert_alpha()
     button4_mouseclick = pygame.image.load(os.path.join('images', 'high scores click.png')).convert_alpha()
     button4 = button(600, 350, 'high scores normal.png')
     button_list.add(button4)
-    while True:
 
+    global cont
+
+    while True:
+        world.blit(backdrop, backdropbox)
         button_list.draw(world)
         b = 0
+        if not cont:
+            world.blit(button3_blocked, (600, 200))
+
         for r in button_list:
             b +=1
-            if r.rect.collidepoint(pygame.mouse.get_pos()) and b==1 :
+            if r.rect.collidepoint(pygame.mouse.get_pos()) and b == 1:
                 world.blit(button1_mouseover, (200,200))
                 if click:
                     world.blit(button1_mouseclick, (200, 200))
+                    cont = 0
                     game()
-            if r.rect.collidepoint(pygame.mouse.get_pos()) and b==2 :
+            if r.rect.collidepoint(pygame.mouse.get_pos()) and b == 2:
                 world.blit(button2_mouseover, (200, 350))
                 if click:
                     world.blit(button2_mouseclick, (200, 350))
                     settings(world)
-            if r.rect.collidepoint(pygame.mouse.get_pos()) and b==3 :
+            if r.rect.collidepoint(pygame.mouse.get_pos()) and b == 3 and cont:
                 world.blit(button3_mouseover, (600, 200))
                 if click:
                     world.blit(button3_mouseclick, (600, 200))
                     game()
-            if r.rect.collidepoint(pygame.mouse.get_pos()) and b==4 :
+            if r.rect.collidepoint(pygame.mouse.get_pos()) and b == 4 :
                 world.blit(button4_mouseover, (600, 350))
                 if click:
                     world.blit(button4_mouseclick, (600, 350))
@@ -556,14 +559,36 @@ def game():
     global cooldown
     global lvl
     global direction
-
+    global cont
     global enemy_list
     global ground_list
     global plat_list
     global loot_list
+    global player
+    global player_list
 
     backdropbox = world.get_rect()
-    backdrop = pygame.image.load(os.path.join('images', 'stage1.png')).convert()
+
+
+    if not cont:
+
+        player = Player()  # spawn player
+        player.rect.x = 0  # go to x
+        player.rect.y = 0  # go to y
+        player_list = pygame.sprite.Group()
+        player_list.add(player)
+        grav = 1
+        scroll_token = 0
+        end_token = 1
+        cooldown = 0
+        lvl = 1
+        direction = 'left'
+        enemy_list = Level.bad(1, [900, 480], 'john')
+        ground_list = Level.ground(1, 0, worldy - ty, 1080, 100)
+        plat_list = Level.platform(1, first_plat_x)
+        loot_list = Level.loot(1)
+
+    backdrop = pygame.image.load(os.path.join('images', 'stage' + str(lvl) + '.png')).convert()
 
     while main:
         for event in pygame.event.get():
@@ -587,6 +612,7 @@ def game():
                     player.control(-steps, 0)
 
                 if event.key == pygame.K_ESCAPE:
+                    cont = 1
                     main = False
 
         # scroll the world forward
@@ -637,11 +663,10 @@ def game():
         plat_list.draw(world)  # refresh platforms
         stats(player.score, player.health, lvl)  # draw text
 
-        if player.score == 6:
+        if not loot_list:
             if lvl == 6:
                 lvl = 0
             lvl += 1
-            player.score = 0
             scroll_token = 0
             end_token = 1
             backdrop, enemy_list, plat_list, loot_list = setup_lvl(lvl, first_plat_x)
@@ -659,49 +684,53 @@ def game():
 
 
 def settings(world):
+    global music
+    global effects
     running = True
     backdropbox = world.get_rect()
-    backdrop = pygame.image.load(os.path.join('images', 'levy jumper.png')).convert()
-    world.blit(backdrop, backdropbox)
+    backdrop = pygame.image.load(os.path.join('images', 'settings background.png')).convert()
 
     sound_button_list = pygame.sprite.Group()
-    music_button_off = pygame.image.load(os.path.join('images', 'new game hover.png')).convert_alpha()
-    # button1_mouseclick = pygame.image.load(os.path.join('images', 'new game click.png')).convert_alpha()
-    music_button_on = button(600, 200, 'new game 1.png')
+    music_button_off = pygame.image.load(os.path.join('images', 'off.png')).convert_alpha()
+    music_button_on = button(700, 285, 'on.png')
     sound_button_list.add(music_button_on)
-    effects_button_off = pygame.image.load(os.path.join('images', 'settings hover.png')).convert_alpha()
-    # button2_mouseclick = pygame.image.load(os.path.join('images', 'settings click.png')).convert_alpha()
-    effects_button_on = button(600, 350, 'settings normal.png')
+    effects_button_off = pygame.image.load(os.path.join('images', 'off.png')).convert_alpha()
+    effects_button_on = button(700, 400, 'on.png')
     sound_button_list.add(effects_button_on)
-    music = 1
-    effects = 1
-    while running:
 
+    while running:
+        world.blit(backdrop, backdropbox)
         sound_button_list.draw(world)
         b = 0
+        if not music:
+            world.blit(music_button_off, (700, 285))
+
+        if not effects:
+            world.blit(effects_button_off, (700, 400))
+
         for l in sound_button_list:
-            b +=1
-            if l.rect.collidepoint(pygame.mouse.get_pos()) and b==1 :
+            b += 1
+            if l.rect.collidepoint(pygame.mouse.get_pos()) and b == 1:
                 if click and music:
-                    sound_button_list.remove(music_button_on)
-                    world.blit(music_button_off, (600, 200))
                     pygame.mixer.music.set_volume(0)
                     music = 0
                 elif click and not music:
-                    sound_button_list.add(music_button_on)
                     pygame.mixer.music.set_volume(0.1)
                     music = 1
             if l.rect.collidepoint(pygame.mouse.get_pos()) and b == 2:
-                if click:
-                    sound_button_list.remove(l)
-                    world.blit(effects_button_off, (600, 350))
+                if click and effects:
                     hit_sound.set_volume(0)
                     coin_sound.set_volume(0)
                     jump_sound.set_volume(0)
+                    effects = 0
+                elif click and not effects:
+                    hit_sound.set_volume(0.3)
+                    coin_sound.set_volume(0.1)
+                    jump_sound.set_volume(0.1)
+                    effects = 1
 
         click = False
 
-        myfont.render_to(world, (4, 4), "settings:" , WHITE, None, size=64)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -712,7 +741,6 @@ def settings(world):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
-
 
         pygame.display.update()
         clock.tick(fps)
@@ -745,6 +773,10 @@ end_token = 1
 cooldown = 0
 lvl = 1
 direction = 'left'
+cont = 0
+
+
+
 
 enemy_list = Level.bad(1, [900, 480], 'john')
 ground_list = Level.ground(1, 0, worldy - ty, 1080, 100)
@@ -776,6 +808,8 @@ coin_sound.set_volume(0.1)
 jump_sound = pygame.mixer.Sound(os.path.join('sound', 'jump.wav'))
 jump_sound.set_volume(0.1)
 
+music = 1
+effects = 1
 '''
 Main Loop
 '''
