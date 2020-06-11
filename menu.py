@@ -8,6 +8,7 @@ import pygame
 import sys
 import os
 import pygame.freetype
+from High_Score_Module import highscore , show_top10
 
 
 '''
@@ -49,7 +50,7 @@ class Player(pygame.sprite.Sprite):
         self.frame = 0  # count frames
         self.collide_delta = 0
         self.jump_delta = 6
-        self.health = 10
+        self.health = 3
         self.score = 0
         self.damage = 0
         self.images = []
@@ -461,6 +462,16 @@ def stats(score, health, lvl):
     myfont.render_to(world, (4, 72), "Health:" + str(health), WHITE, None, size=64)
     myfont.render_to(world, (4, 140), "level:" + str(lvl), WHITE, None, size=64)
 
+def lvl_cutscene(lvl):
+    backdropbox = world.get_rect()
+    backdrop = pygame.image.load(os.path.join('images', 'stage' + str(lvl) + '.png')).convert()
+    world.blit(backdrop, backdropbox)
+    myfont.render_to(world, (200, 200), "level:" + str(lvl), WHITE, None, size=200)
+    pygame.display.update()
+    clock.tick(fps)
+    pygame.time.wait(2000)
+    return
+
 def setup_lvl(lvl_num, first_plat):
 
     backdrop = pygame.image.load(os.path.join('images', 'stage' + str(lvl_num) + '.png')).convert()
@@ -526,6 +537,7 @@ def main_menu():
                 world.blit(button4_mouseover, (600, 350))
                 if click:
                     world.blit(button4_mouseclick, (600, 350))
+                    show_top10(world, 'score_file.txt')
 
 
         click = False
@@ -667,17 +679,16 @@ def game():
             if lvl == 6:
                 lvl = 0
             lvl += 1
+            lvl_cutscene(lvl)
             scroll_token = 0
             end_token = 1
             backdrop, enemy_list, plat_list, loot_list = setup_lvl(lvl, first_plat_x)
 
         if player.health == 0:
-            lvl = 1
-            scroll_token = 0
-            backdrop, enemy_list, plat_list, loot_list = setup_lvl(lvl, first_plat_x)
-            player.score = 0
-            end_token = 1
-            player.health = 10
+            highscore(world, 'score_file.txt', player.score)
+            cont = 0
+            main = False
+
 
         pygame.display.flip()
         clock.tick(fps)
