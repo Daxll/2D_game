@@ -53,6 +53,7 @@ class Player(pygame.sprite.Sprite):
         self.health = 3
         self.score = 0
         self.damage = 0
+        self.shot = 0
         self.images = []
         for i in range(1, 9):
             img = pygame.image.load(os.path.join('images', 'firzen' + str(i) + '.png')).convert()
@@ -64,6 +65,9 @@ class Player(pygame.sprite.Sprite):
 
     def jump(self, platform_list):
         self.jump_delta = 0
+
+    def fire(self):
+        self.shot = 1
 
     def gravity(self):
         global grav
@@ -112,12 +116,6 @@ class Player(pygame.sprite.Sprite):
             self.image = self.images[self.frame // 3]
 
         enemy_hit_list = pygame.sprite.spritecollide(self, enemy_list, False)
-        # for enemy in hit_list:
-        #     self.health -= 1
-        #     if self.rect.x <= enemy.rect.x:
-        #         cooldown = 20
-        #     elif self.rect.x > enemy.rect.x:
-        #         cooldown = 20
         if self.damage == 0:
             for enemy in enemy_hit_list:
                 if not self.rect.contains(enemy):
@@ -139,7 +137,6 @@ class Player(pygame.sprite.Sprite):
             loot_list.remove(loot)
             coin_sound.play()
             self.score += 1
-
 
         ground_hit_list = pygame.sprite.spritecollide(self, ground_list, False)
         for g in ground_hit_list:
@@ -167,16 +164,63 @@ class Player(pygame.sprite.Sprite):
         # prevent exiting screen left side / end lvl condition will be added later.
         if self.rect.x >= 1030:
             self.rect.x = 1030
-        # print(self.rect.x)
 
         # jump mechanic
         if self.collide_delta < 6 and self.jump_delta < 6:
-            # self.jump_delta = 6*2
             self.movey -= 33  # how high to jump
             jump_sound.play()
             self.collide_delta += 6
             self.jump_delta += 6
             grav = 1
+
+        for f in fireball_list:
+            plat_fire_list = pygame.sprite.spritecollide(f, plat_list, False)
+            for pf in plat_fire_list:
+                fireball_list.remove(f)
+            bad_fire_list = pygame.sprite.spritecollide(f, enemy_list, False)
+            for bf in bad_fire_list:
+                fireball_list.remove(f)
+                enemy_list.remove(bf)
+                self.score += 1
+            distance = 50
+            global shot_speed
+            if self.shot == 1:
+                if self.image in self.images[0:4]:
+                    f.image = f.images[0]
+                    shot_speed = 10
+                    self.shot = 0
+                else:
+                    f.image = f.images[1]
+                    shot_speed = -10
+                    self.shot = 0
+            f.rect.x += shot_speed
+            f.counter += 1
+            if f.counter == distance :
+                self.shot = 0
+                f.counter = 0
+                shot_speed = 0
+                fireball_list.remove(f)
+
+
+
+
+
+class Fireball(pygame.sprite.Sprite):
+    # x location, y location
+    def __init__(self, xloc, yloc):
+        ALPHA = (0, 0, 0)
+        pygame.sprite.Sprite.__init__(self)
+        self.images = []
+        for i in range(1, 3):
+            img = pygame.image.load(os.path.join('images', 'fireball' + str(i) + '.png')).convert()
+            img.convert_alpha()  # optimise alpha
+            img.set_colorkey(ALPHA)  # set alpha
+            self.images.append(img)
+            self.image = self.images[0]
+            self.rect = self.image.get_rect()
+            self.rect.x = xloc
+            self.rect.y = yloc + 15
+            self.counter = 0  # counter variable
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -198,6 +242,7 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.x = x
             self.rect.y = y
             self.counter = 0  # counter variable
+
 
     def move(self):
         '''
@@ -578,6 +623,7 @@ def game():
     global loot_list
     global player
     global player_list
+    global fireball_list
 
     backdropbox = world.get_rect()
 
@@ -616,6 +662,11 @@ def game():
                     player.control(steps, 0)
                 if event.key == pygame.K_UP or event.key == ord('w'):
                     player.jump(plat_list)
+                if event.key == pygame.K_SPACE:
+                    if not fireball_list:
+                        fireball = Fireball(player.rect.x , player.rect.y)
+                        fireball_list.add(fireball)
+                        player.fire()
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == ord('a'):
@@ -672,6 +723,7 @@ def game():
             e.move()
 
         # ground_list.draw(world)  # refresh ground
+        fireball_list.draw(world)
         plat_list.draw(world)  # refresh platforms
         stats(player.score, player.health, lvl)  # draw text
 
@@ -703,10 +755,10 @@ def settings(world):
 
     sound_button_list = pygame.sprite.Group()
     music_button_off = pygame.image.load(os.path.join('images', 'off.png')).convert_alpha()
-    music_button_on = button(700, 285, 'on.png')
+    music_button_on = button(600, 160, 'on.png')
     sound_button_list.add(music_button_on)
     effects_button_off = pygame.image.load(os.path.join('images', 'off.png')).convert_alpha()
-    effects_button_on = button(700, 400, 'on.png')
+    effects_button_on = button(600, 230, 'on.png')
     sound_button_list.add(effects_button_on)
 
     while running:
@@ -714,10 +766,10 @@ def settings(world):
         sound_button_list.draw(world)
         b = 0
         if not music:
-            world.blit(music_button_off, (700, 285))
+            world.blit(music_button_off, (600, 160))
 
         if not effects:
-            world.blit(effects_button_off, (700, 400))
+            world.blit(effects_button_off, (600, 230))
 
         for l in sound_button_list:
             b += 1
@@ -785,7 +837,7 @@ cooldown = 0
 lvl = 1
 direction = 'left'
 cont = 0
-
+shot_speed = 0
 
 
 
@@ -793,7 +845,7 @@ enemy_list = Level.bad(1, [900, 480], 'john')
 ground_list = Level.ground(1, 0, worldy - ty, 1080, 100)
 plat_list = Level.platform(1, first_plat_x)
 loot_list = Level.loot(1)
-
+fireball_list = pygame.sprite.Group()
 BLUE = (25, 25, 200)
 BLACK = (23, 23, 23)
 WHITE = (254, 254, 254)
@@ -804,7 +856,7 @@ clock = pygame.time.Clock()
 pygame.init()
 
 # getting font for the score
-font_path = os.path.join('fonts', 'PixelOperator.ttf')
+font_path = os.path.join('fonts', 'anomalia-regular.otf')
 font_size = tx
 myfont = pygame.freetype.Font(font_path, font_size)
 

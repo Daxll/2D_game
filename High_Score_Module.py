@@ -1,4 +1,6 @@
-import pygame, sys
+import pygame, sys , os
+import pygame.freetype
+
 pygame.init()
 
 GREY = (150, 150, 150)
@@ -6,6 +8,9 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 font = pygame.font.SysFont("Arial", 16)
 
+font_path = os.path.join('fonts', 'anomalia-regular.otf')
+font_size = 50
+myfont = pygame.freetype.Font(font_path, font_size)
 
 def read_from_file_and_find_highscore(file_name):
     file = open(file_name, 'r')
@@ -27,16 +32,18 @@ def read_from_file_and_find_highscore(file_name):
 
 def write_to_file(file_name, your_name, points):
     score_file = open(file_name, 'a')
-    print (your_name+",", points, file=score_file)
+    print(your_name+",", points, file=score_file)
     score_file.close()
     
 
 def show_top10(screen, file_name):
-    bx = 480  # x-size of box
-    by = 400  # y-size of box
-    
+    bx = 1080  # x-size of box
+    by = 600  # y-size of box
+    # screen = pygame.display.set_mode([bx, by])
+    backdropbox = screen.get_rect()
+    backdrop = pygame.image.load(os.path.join('images', 'high scores.png')).convert()
     file = open(file_name, 'r')
-    lines=file.readlines()
+    lines = file.readlines()
        
     all_score = []
     for line in lines:
@@ -47,34 +54,39 @@ def show_top10(screen, file_name):
     file.close
     all_score.sort(reverse=True)  # sort from largest to smallest
     best = all_score[:10]  # top 10 values
-
+    screen.blit(backdrop, backdropbox)
     # make the presentation box
-    box = pygame.surface.Surface((bx, by)) 
-    box.fill(GREY)
-    pygame.draw.rect(box, WHITE, (50, 12, bx-100, 35), 0)
-    pygame.draw.rect(box, WHITE, (50, by-60, bx-100, 42), 0)
-    pygame.draw.rect(box, BLACK, (0, 0, bx, by), 1)
-    txt_surf = font.render("HIGHSCORE", True, BLACK)  # headline
-    txt_rect = txt_surf.get_rect(center=(bx//2, 30))
-    box.blit(txt_surf, txt_rect)
-    txt_surf = font.render("Press ENTER to continue", True, BLACK)  # bottom line
-    txt_rect = txt_surf.get_rect(center=(bx//2, 360))
-    box.blit(txt_surf, txt_rect)
+    # box = pygame.surface.Surface((bx, by))
+    # box.fill(GREY)
+    # pygame.draw.rect(box, WHITE, (50, 12, bx-100, 35), 0)
+    # pygame.draw.rect(box, WHITE, (50, by-60, bx-100, 42), 0)
+    # pygame.draw.rect(box, BLACK, (0, 0, bx, by), 1)
+    # txt_surf = font.render("HIGHSCORE", True, BLACK)  # headline
+    # font.render_to(screen, (100, 100), "HIGHSCORE", BLACK, None, size=64)
+    # txt_rect = txt_surf.get_rect(center=(bx//2, 30))
+    # box.blit(txt_surf, txt_rect)
+    # font.render_to(screen, (540, 400), "Press ENTER to continue", BLACK, None, size=32)
+    # txt_surf = font.render("Press ENTER to continue", True, BLACK)  # bottom line
+    # txt_rect = txt_surf.get_rect(center=(bx//2, 360))
+    # box.blit(txt_surf, txt_rect)
 
     # write the top-10 data to the box
     for i, entry in enumerate(best):
-        txt_surf = font.render(entry[1] + "  " + str(entry[0]), True, BLACK)
-        txt_rect = txt_surf.get_rect(center=(bx//2, 30*i+60))
-        box.blit(txt_surf, txt_rect)
-    
-    screen.blit(box, (0, 0))
+        if i < 5:
+            myfont.render_to(screen, (200, 60*i+200),str(i+1) + ".  " + entry[1] + "  " + str(entry[0]), BLACK, None, size=40)
+        else:
+            myfont.render_to(screen, (bx // 2 + 100 , 60 * (i-5) + 200), str(i + 1) + ".  " + entry[1] + "  " + str(entry[0]),
+                           BLACK, None, size=40)
+
+    # screen.blit(box, (0, 0))
     pygame.display.flip()
     
     while True:  # wait for user to acknowledge and return
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN and event.key in [pygame.K_RETURN, pygame.K_KP_ENTER]:
-                return
-        pygame.time.wait(20)
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+            pygame.time.wait(20)
     
 
 def enterbox(screen, txt):
