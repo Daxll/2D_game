@@ -73,11 +73,11 @@ def show_top10(screen, file_name):
     # write the top-10 data to the box
     for i, entry in enumerate(best):
         if i < 5:
-            myfont.render_to(screen, (200, 60*i+200),str(i+1) + ".  " + entry[1] + "  " + str(entry[0]), BLACK, None, size=40)
+            myfont.render_to(screen, (100, 60*i+200),str(i+1) + ".  " + entry[1] + "  " , BLACK, None, size=40)
+            myfont.render_to(screen, (400, 60 * i + 200), str(entry[0]), BLACK, None, size=40)
         else:
-            myfont.render_to(screen, (bx // 2 + 100 , 60 * (i-5) + 200), str(i + 1) + ".  " + entry[1] + "  " + str(entry[0]),
-                           BLACK, None, size=40)
-
+            myfont.render_to(screen, (bx // 2 + 50 , 60 * (i-5) + 200), str(i + 1) + ".  " + entry[1] + "  ", BLACK, None, size=40)
+            myfont.render_to(screen, (bx // 2 + 350, 60 * (i-5) + 200), str(entry[0]), BLACK, None, size=40)
     # screen.blit(box, (0, 0))
     pygame.display.flip()
     
